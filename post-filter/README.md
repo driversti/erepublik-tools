@@ -17,10 +17,26 @@ The script also removes any auto-generated posts, as these are often uninteresti
     
     [Opera](https://addons.opera.com/en/extensions/details/tampermonkey-beta/)
 
-2. Once **Tampermonkey** is installed, click [here](post_filter.userscript.js) to install the eRepublik Post Filter script.
+2. Once **Tampermonkey** is installed, click [here](https://raw.githubusercontent.com/driversti/erepX/main/post-filter/post_filter.userscript.js) to install the eRepublik Post Filter script.
 
 3. **Tampermonkey** should automatically detect the script and open the installation page. 
-Click Install to finish installing the script.
+Click **Install** to finish installing the script.
+
+_Note._ In case **Tampermonkey** doesn't recognize the script automatically, 
+you can install it manually by following these steps:
+
+- Right-click on the link to the script and choose "**Save Link As...**" to download the script to your computer.
+
+- Open **Tampermonkey** in your browser and click on the **Dashboard**.
+
+- In the dashboard, click on the **+** tab to create a new script.
+
+- Delete any content in the editor, then open the script file you downloaded in a text editor such as **Notepad** or **TextEdit**.
+
+- Copy all of the content from the script file, then go back to **Tampermonkey** and paste it into the editor.
+
+- Click **File > Save** or press **CTRL+S** to save the script. 
+- Now the script is installed and should appear in your list of userscripts in **Tampermonkey**.
 
 ## Configuration
 The script uses an array of banned words to filter posts. You can modify this array to suit your needs.
