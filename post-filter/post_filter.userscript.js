@@ -3,8 +3,8 @@
 // @version      1.0
 // @description  try to take over the world!
 // @author       driversti https://www.erepublik.com/en/citizen/profile/4690052
-// @updateURL    https://raw.githubusercontent.com/driversti/erepX/main/post-filter/post_filter.userscript.js
-// @downloadURL  https://raw.githubusercontent.com/driversti/erepX/main/post-filter/post_filter.userscript.js
+// @downloadURL  https://github.com/driversti/erepX/releases/download/post-filter_v1.0/post_filter.userscript.js
+// @updateURL    https://github.com/driversti/erepX/releases/download/post-filter_v1.0/post_filter.userscript.js
 // @match        https://www.erepublik.com/*
 // @require      http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js
 // @run-at       document-end

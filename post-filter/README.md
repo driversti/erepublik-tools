@@ -17,7 +17,7 @@ The script also removes any auto-generated posts, as these are often uninteresti
     
     [Opera](https://addons.opera.com/en/extensions/details/tampermonkey-beta/)
 
-2. Once **Tampermonkey** is installed, click [here](https://raw.githubusercontent.com/driversti/erepX/main/post-filter/post_filter.userscript.js) to install the eRepublik Post Filter script.
+2. Once **Tampermonkey** is installed, click [here](https://github.com/driversti/erepX/releases) to install the eRepublik Post Filter script.
 
 3. **Tampermonkey** should automatically detect the script and open the installation page. 
 Click **Install** to finish installing the script.
