@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         eRepublik Post Filter
-// @version      0.1
+// @version      1.0
 // @description  try to take over the world!
 // @author       driversti https://www.erepublik.com/en/citizen/profile/4690052
-// @updateURL
-// @downloadURL
+// @updateURL    https://raw.githubusercontent.com/driversti/erepX/main/post-filter/post_filter.userscript.js
+// @downloadURL  https://raw.githubusercontent.com/driversti/erepX/main/post-filter/post_filter.userscript.js
 // @match        https://www.erepublik.com/*
 // @require      http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js
 // @run-at       document-end
