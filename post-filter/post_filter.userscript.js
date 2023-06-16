@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         eRepublik Post Filter
-// @version      1.0
+// @version      1.1
 // @description  try to take over the world!
 // @author       driversti https://www.erepublik.com/en/citizen/profile/4690052
-// @downloadURL  https://github.com/driversti/erepX/releases/download/post-filter_v1.0/post_filter.userscript.js
-// @updateURL    https://github.com/driversti/erepX/releases/download/post-filter_v1.0/post_filter.userscript.js
+// @downloadURL  https://github.com/driversti/erepX/releases/download/latest/post_filter.userscript.js
+// @updateURL    https://github.com/driversti/erepX/releases/download/latest/post_filter.userscript.js
 // @match        https://www.erepublik.com/*
 // @require      http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js
 // @run-at       document-end
@@ -17,7 +17,7 @@
   'use strict';
 
   const bannedWords = [
-    "wordle","Congratulations, you entered the Top 100"
+    "wordle","Congratulations, you entered the Top 100","*♥♥*"
   ]; // Add the words you want to filter out.
 
   function filterPosts() {
@@ -36,7 +36,7 @@
     });
   }
 
-  $(window).on("load", function () {
+  function setPostFilter() {
     filterPosts(); // Initial filtering
 
     let observer = new MutationObserver(filterPosts);
@@ -51,5 +51,15 @@
     } else {
       console.log("Could not find target node for MutationObserver");
     }
+  }
+
+  $(window).on("load", function () {
+    // wait for the ".postsWrapper" element to appear
+    new MutationObserver(function(mutations, observer) {
+      if (document.querySelector(".postsWrapper")) {
+        setPostFilter();
+        observer.disconnect(); // stop observing when the element has been found
+      }
+    }).observe(document.body, {childList: true, subtree: true});
   });
 })();
