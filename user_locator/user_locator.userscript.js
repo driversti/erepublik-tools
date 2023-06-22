@@ -16,21 +16,28 @@
 (async function () {
   'use strict';
 
-  applyStyles();
-  addPlayerLocatorDiv();
+  await applyStyles();
+  await addPlayerLocatorDiv();
 })();
 
-const getPlayerData = id => fetch(`https://www.erepublik.com/en/main/citizen-profile-json-personal/${id}`, {
-  headers: {
-    Accept: 'application/json, text/plain, */*',
-    'User-Agent': navigator.userAgent,
-    Cookie: document.cookie
-  },
-}).then(response => response.json());
+async function getPlayerData(id) {
+  const response = await fetch(`https://www.erepublik.com/en/main/citizen-profile-json-personal/${id}`, {
+    headers: {
+      Accept: 'application/json, text/plain, */*',
+      'User-Agent': navigator.userAgent,
+      Cookie: document.cookie
+    },
+  })
+  return await response.json();
+}
 
-const savePlayers = players => localStorage.setItem('locatorPlayers', JSON.stringify(players));
+function savePlayers(players) {
+  localStorage.setItem('locatorPlayers', JSON.stringify(players))
+}
 
-const loadPlayers = () => JSON.parse(localStorage.getItem('locatorPlayers')) || [];
+function loadPlayers() {
+  return JSON.parse(localStorage.getItem('locatorPlayers')) || []
+}
 
 function addPlayerLocatorDiv() {
   const trackerHTML = `
@@ -51,10 +58,9 @@ function addPlayerLocatorDiv() {
         </div>
     </div>`;
 
-  const body = document.body;
   const container = document.createElement('div');
   container.innerHTML = trackerHTML;
-  body.appendChild(container);
+  document.body.appendChild(container);
   const addToTrackingButton = document.getElementById('addToTrackingButton');
   addToTrackingButton.addEventListener('click', addPlayerToTracker);
   const setIntervalButton = document.getElementById('setIntervalButton');
@@ -75,9 +81,11 @@ function addPlayerLocatorDiv() {
   makeElementDraggable(playerTracker);
 }
 
-const setIntervalOfTracking = () => console.log('Not implemented yet');
+function setIntervalOfTracking() {
+  console.log('Not implemented yet');
+}
 
-const makeElementDraggable = element => {
+function makeElementDraggable(element) {
   let offsetX = 0;
   let offsetY = 0;
   let isDragging = false;
@@ -109,7 +117,7 @@ const makeElementDraggable = element => {
   });
 }
 
-const addPlayerRow = async (id, paused = false) => {
+async function addPlayerRow(id, paused = false) {
   if (paused) return;
 
   const data = await getPlayerData(id);
@@ -127,9 +135,11 @@ const addPlayerRow = async (id, paused = false) => {
     .addEventListener('click', () => removePlayerFromLocator(id));
 }
 
-const populateWithPlayers = () => loadPlayers().forEach(p => addPlayerRow(p.id, p.paused));
+function populateWithPlayers() {
+  loadPlayers().forEach(p => addPlayerRow(p.id, p.paused));
+}
 
-const addPlayerToTracker = async () => {
+async function addPlayerToTracker() {
   const playerIdInput = document.getElementById('playerID');
   const id = playerIdInput.value;
   console.log(`https://www.erepublik.com/en/citizen/profile/${id}`)
@@ -144,7 +154,7 @@ const addPlayerToTracker = async () => {
   playerIdInput.value = '';
 }
 
-const createPlayerRow = (id, name, location, isOnline) => {
+function createPlayerRow(id, name, location, isOnline) {
   const row = document.createElement('div');
   row.className = 'player-row';
   row.innerHTML = `
@@ -157,7 +167,7 @@ const createPlayerRow = (id, name, location, isOnline) => {
   return row;
 }
 
-const removePlayerFromLocator = id => {
+function removePlayerFromLocator(id) {
   // Remove the player's row from the DOM
   const playerRow = document.getElementById(`player-${id}`);
   playerRow.remove();
@@ -169,7 +179,7 @@ const removePlayerFromLocator = id => {
   savePlayers(players);
 }
 
-const applyStyles = () => {
+function applyStyles() {
   const style = document.createElement('style');
   style.textContent = `
     .trackerWrapper {
