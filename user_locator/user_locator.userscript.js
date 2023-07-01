@@ -6,8 +6,6 @@
 // @downloadURL
 // @updateURL
 // @match        https://www.erepublik.com/*
-// @require      https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js
-// @require      https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js
 // @run-at       document-end
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=erepublik.com
 // @grant        none
@@ -41,22 +39,27 @@ function loadPlayers() {
 
 function addPlayerLocatorDiv() {
   const trackerHTML = `
-    <div id="playerTracker" style="border:1px solid black;">
-        <div id="locatorHeader">
-            <span class="col">Player</span>
-            <span class="col">Location</span>
-            <span class="col">Remove</span>
-        </div>
-        <div id="players"></div>
-        <div class="input-button-wrapper">
-            <input id="playerID" type="number" placeholder="Player ID">
-            <button id="addToTrackingButton">Add</button>
-        </div>
-        <div class="input-button-wrapper">
-            <input id="updateInterval" type="number" placeholder="Update every X seconds">
-            <button id="setIntervalButton">Set</button>
-        </div>
-    </div>`;
+  <div id="playerTracker" style="border:1px solid black;">
+    <table id="playersTable">
+      <thead>
+        <tr id="locatorHeader">
+          <th class="col">Player</th>
+          <th class="col">Location</th>
+          <th class="col">Remove</th>
+        </tr>
+      </thead>
+      <tbody id="players">
+      </tbody>
+    </table>
+    <div class="input-button-wrapper">
+      <input id="playerID" type="number" placeholder="Player ID">
+      <button id="addToTrackingButton">Add</button>
+    </div>
+    <div class="input-button-wrapper">
+      <input id="updateInterval" type="number" placeholder="Update every X seconds">
+      <button id="setIntervalButton">Set</button>
+    </div>
+  </div>`;
 
   const container = document.createElement('div');
   container.innerHTML = trackerHTML;
@@ -117,26 +120,62 @@ function makeElementDraggable(element) {
   });
 }
 
+function populateWithPlayers() {
+  loadPlayers()
+    .filter(p => !p.paused)
+    .sort((a, b) => a.id - b.id)
+    .forEach(p => addPlayerRow(p.id));
+}
+
 async function addPlayerRow(id, paused = false) {
-  if (paused) return;
-
+  console.log(id)
   const data = await getPlayerData(id);
-  const {citizen, location} = data;
-  const name = citizen.name;
-  const region = location.citizenLocationInfo.residence_region_id;
-  const country = location.citizenLocationInfo.residence_country_id;
-  const isOnline = citizen.onlineStatus;
-
+  // console.log(`Profile data: ${JSON.stringify(data)}`)
+  const name = data.citizen.name;
+  const country = data.location.residenceCountry.name;
+  const region = data.location.residenceRegion.name;
+  const isOnline = data.citizen.onlineStatus;
   const playerRow = createPlayerRow(id, name, `${country}, ${region}`, isOnline);
   const playersDiv = document.getElementById('players');
   playersDiv.appendChild(playerRow);
-
-  document.getElementById('removePlayerFromLocatorButton')
-    .addEventListener('click', () => removePlayerFromLocator(id));
 }
 
-function populateWithPlayers() {
-  loadPlayers().forEach(p => addPlayerRow(p.id, p.paused));
+function createPlayerRow(id, name, location, isOnline) {
+  const row = document.createElement('tr');
+  row.id = `player-${id}`
+  row.className = 'player-row';
+
+  const button = document.createElement('button');
+  button.style.width = 'fit-content';
+  button.textContent = 'X';
+  button.addEventListener('click', () => removePlayerFromLocator(id));
+
+  row.innerHTML = `
+    <td class="col">
+      <a href="https://www.erepublik.com/en/citizen/profile/${id}" target="_blank">
+        <span class="col ${isOnline ? 'online' : 'offline'}">${name} (${id})</span>
+      </a>
+    </td>
+    <td class="col">${location}</td>
+    <td class="col"></td> 
+    `;
+
+  row.children[2].appendChild(button); // append the button to the third cell
+
+  return row;
+}
+
+function removePlayerFromLocator(id) {
+  console.log(`Remove player ${id}`)
+  // Remove the player's row from the DOM
+  const playerRow = document.getElementById(`player-${id}`);
+  playerRow.remove();
+
+  let players = loadPlayers();
+  players = players.filter(player => player.id !== id);
+
+  // Save the updated list of player IDs back to local storage
+  savePlayers(players);
 }
 
 async function addPlayerToTracker() {
@@ -152,31 +191,6 @@ async function addPlayerToTracker() {
   savePlayers(players);
 
   playerIdInput.value = '';
-}
-
-function createPlayerRow(id, name, location, isOnline) {
-  const row = document.createElement('div');
-  row.className = 'player-row';
-  row.innerHTML = `
-        <a href="https://www.erepublik.com/en/citizen/profile/${id}" target="_blank">
-          <span class="col ${isOnline ? 'online' : 'offline'}">${name} (${id})</span>
-        </a>
-        <span class="col">${location}</span>
-        <span class="col"><button id="removePlayerFromLocatorButton">X</button></span>
-    `;
-  return row;
-}
-
-function removePlayerFromLocator(id) {
-  // Remove the player's row from the DOM
-  const playerRow = document.getElementById(`player-${id}`);
-  playerRow.remove();
-
-  let players = loadPlayers();
-  players = players.filter(player => player.id !== id);
-
-  // Save the updated list of player IDs back to local storage
-  savePlayers(players);
 }
 
 function applyStyles() {
@@ -201,6 +215,7 @@ function applyStyles() {
     #playerTracker .col {
         flex: 1;
         padding: 5px;
+        text-align: left
     }
 
     #playerTracker .col:first-child {
