@@ -89,6 +89,7 @@ function setIntervalOfTracking(event) {
   console.log(`Interval set to ${interval} seconds.`);
   setRefreshInterval('set interval of tracking')
   updateIntervalInput.value = ""
+  updateIntervalInput.placeholder = `Update every ${interval} seconds`
 }
 
 function populateWithPlayers() {
