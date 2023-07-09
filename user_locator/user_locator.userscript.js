@@ -9,10 +9,12 @@
 // @run-at       document-end
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=erepublik.com
 // @grant        none
+// @noframes
 // ==/UserScript==
 
 (async function () {
   'use strict';
+  console.log('Script loaded');
 
   await applyStyles();
 
@@ -21,27 +23,20 @@
     interval = 60; // Set default interval to 60 seconds if not set
     localStorage.setItem('locator-interval', interval); // Save it to local storage
   }
-  await addPlayerLocatorDiv();
-
-  const intervalMilliseconds = Number(interval) * 1000;
-
-  if (window.refreshIntervalId) {
-    clearInterval(window.refreshIntervalId); // Make sure there is only one interval running
-  }
-
-  window.refreshIntervalId = setInterval(refreshPlayerTable, intervalMilliseconds);
+  await renderPlayerLocatorDiv();
+  setRefreshInterval('main function')
 
   // Clear the table before populating
-  const playersDiv = document.getElementById('players');
-  while (playersDiv.firstChild) {
-    playersDiv.removeChild(playersDiv.firstChild);
-  }
+  // const playersDiv = document.getElementById('players');
+  // while (playersDiv.firstChild) {
+  //   playersDiv.removeChild(playersDiv.firstChild);
+  // }
 
   // Populate players after setting the interval
-  await refreshPlayerTable();
+  // await refreshPlayerTable('main function');
 })();
 
-function addPlayerLocatorDiv() {
+function renderPlayerLocatorDiv() {
   const interval = localStorage.getItem('locator-interval') || 60;
   const trackerHTML = `
   <div id="playerTracker" style="border:1px solid black;">
@@ -75,7 +70,7 @@ function addPlayerLocatorDiv() {
   setIntervalButton.addEventListener('click', event => setIntervalOfTracking(event));
 
   const playerTracker = document.getElementById('playerTracker');
-  const savedPosition = JSON.parse(localStorage.getItem('playerTrackerPosition')) || {left: '350px', top: '380px'};
+  const savedPosition = JSON.parse(localStorage.getItem('locator-table-position')) || {left: '350px', top: '380px'};
   console.log(`Saved position: ${JSON.stringify(savedPosition)}`);
   Object.assign(playerTracker.style, {
     position: 'absolute',
@@ -85,7 +80,7 @@ function addPlayerLocatorDiv() {
     top: savedPosition.top,
     zIndex: '2001'
   });
-  populateWithPlayers(); // we call it when setting interval
+  populateWithPlayers();
   makeElementDraggable(playerTracker);
 }
 
@@ -99,19 +94,19 @@ function setIntervalOfTracking(event) {
     return;
   }
 
+  // Cancel any existing timeout
+  // if (window.refreshTimeoutId) {
+  //   clearTimeout(window.refreshTimeoutId);
+  // }
+
+  // Start a new timeout
   // Convert the interval from seconds to milliseconds, as required by setInterval
-  const intervalMilliseconds = Number(interval) * 1000;
-
-  // Cancel any existing interval
-  if (window.refreshIntervalId) {
-    clearInterval(window.refreshIntervalId);
-  }
-
-  // Start a new interval
-  window.refreshIntervalId = setInterval(refreshPlayerTable, intervalMilliseconds);
+  // const intervalMilliseconds = Number(interval) * 1000;
+  // window.refreshTimeoutId = setTimeout(() => refreshPlayerTable('interval'), intervalMilliseconds);
 
   localStorage.setItem('locator-interval', Number(interval));
   console.log(`Interval set to ${interval} seconds.`);
+  setRefreshInterval('set interval of tracking')
   updateIntervalInput.value = ""
 }
 
@@ -123,7 +118,7 @@ function populateWithPlayers() {
 }
 
 function loadPlayers() {
-  return JSON.parse(localStorage.getItem('locatorPlayers')) || []
+  return JSON.parse(localStorage.getItem('locator-players')) || []
 }
 
 async function addPlayerRow(id) {
@@ -143,7 +138,9 @@ async function fetchPlayerData(id) {
 }
 
 async function getPlayerData(id) {
-  const response = await fetch(`https://www.erepublik.com/en/main/citizen-profile-json-personal/${id}`, {
+  let url = `https://www.erepublik.com/en/main/citizen-profile-json-personal/${id}`
+  console.log(`Fetching location: ${url}`)
+  const response = await fetch(url, {
     headers: {
       Accept: 'application/json, text/plain, */*',
       'User-Agent': navigator.userAgent,
@@ -192,7 +189,7 @@ function removePlayerFromLocator(id) {
 }
 
 function savePlayers(players) {
-  localStorage.setItem('locatorPlayers', JSON.stringify(players))
+  localStorage.setItem('locator-players', JSON.stringify(players))
 }
 
 function makeElementDraggable(element) {
@@ -213,7 +210,7 @@ function makeElementDraggable(element) {
       element.style.left = `${event.clientX - offsetX}px`;
       element.style.top = `${event.clientY - offsetY}px`;
       // Save the new position in local storage
-      localStorage.setItem('playerTrackerPosition', JSON.stringify({
+      localStorage.setItem('locator-table-position', JSON.stringify({
         left: element.style.left,
         top: element.style.top
       }));
@@ -230,7 +227,7 @@ function makeElementDraggable(element) {
 async function addPlayerToTracker() {
   const playerIdInput = document.getElementById('playerID');
   const id = playerIdInput.value;
-  console.log(`https://www.erepublik.com/en/citizen/profile/${id}`)
+  console.log(`Add https://www.erepublik.com/en/citizen/profile/${id}`)
 
   await addPlayerRow(id);
 
@@ -240,10 +237,19 @@ async function addPlayerToTracker() {
   savePlayers(players);
 
   playerIdInput.value = '';
+
+  // After adding a player, clear the existing timeout and start a new one
+  // if (window.refreshTimeoutId) {
+  //   clearTimeout(window.refreshTimeoutId);
+  // }
+
+  // const intervalMilliseconds = Number(localStorage.getItem('locator-interval')) * 1000;
+  // window.refreshTimeoutId = setTimeout(() => refreshPlayerTable('addPlayer'), intervalMilliseconds);
+  setRefreshInterval('addPlayer')
 }
 
-async function refreshPlayerTable() {
-  console.log(`${new Date().toLocaleString()} - Refreshing location...`);
+async function refreshPlayerTable(caller) {
+  console.log(`${new Date().toLocaleString()} - Refreshing location... (called by ${caller})`);
 
   // Fetch data for all players
   const players = loadPlayers().filter(p => !p.paused).sort((a, b) => a.id - b.id);
@@ -261,6 +267,10 @@ async function refreshPlayerTable() {
       document.getElementById('players').appendChild(newRow);
     }
   });
+
+  // const intervalMilliseconds = Number(localStorage.getItem('locator-interval')) * 1000;
+  // window.refreshTimeoutId = setTimeout(() => refreshPlayerTable('refresh player table'), intervalMilliseconds);
+  setRefreshInterval('refresh player table')
 }
 
 function updatePlayerRow(row, {id, name, location, isOnline}) {
@@ -268,6 +278,15 @@ function updatePlayerRow(row, {id, name, location, isOnline}) {
   row.children[0].children[0].className = `col ${isOnline ? 'online' : 'offline'}`;
   row.children[0].children[0].textContent = `${name} (${id})`;
   row.children[1].textContent = location;
+}
+
+function setRefreshInterval(caller) {
+  // Cancel any existing timeout
+  if (window.refreshTimeoutId) {
+    clearTimeout(window.refreshTimeoutId);
+  }
+  const intervalMilliseconds = Number(localStorage.getItem('locator-interval')) * 1000;
+  window.refreshTimeoutId = setTimeout(() => refreshPlayerTable(caller), intervalMilliseconds);
 }
 
 function applyStyles() {
