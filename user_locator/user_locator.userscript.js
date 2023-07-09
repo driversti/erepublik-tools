@@ -15,13 +15,13 @@
   'use strict';
 
   await applyStyles();
-  await addPlayerLocatorDiv();
 
   let interval = localStorage.getItem('locator-interval');
   if (!interval) {
     interval = 60; // Set default interval to 60 seconds if not set
     localStorage.setItem('locator-interval', interval); // Save it to local storage
   }
+  await addPlayerLocatorDiv();
 
   const intervalMilliseconds = Number(interval) * 1000;
 
@@ -40,25 +40,6 @@
   // Populate players after setting the interval
   await refreshPlayerTable();
 })();
-
-async function getPlayerData(id) {
-  const response = await fetch(`https://www.erepublik.com/en/main/citizen-profile-json-personal/${id}`, {
-    headers: {
-      Accept: 'application/json, text/plain, */*',
-      'User-Agent': navigator.userAgent,
-      Cookie: document.cookie
-    },
-  })
-  return await response.json();
-}
-
-function savePlayers(players) {
-  localStorage.setItem('locatorPlayers', JSON.stringify(players))
-}
-
-function loadPlayers() {
-  return JSON.parse(localStorage.getItem('locatorPlayers')) || []
-}
 
 function addPlayerLocatorDiv() {
   const interval = localStorage.getItem('locator-interval') || 60;
@@ -134,43 +115,22 @@ function setIntervalOfTracking(event) {
   updateIntervalInput.value = ""
 }
 
-function makeElementDraggable(element) {
-  let offsetX = 0;
-  let offsetY = 0;
-  let isDragging = false;
-
-  // When the user presses the mouse button, start dragging
-  element.addEventListener('mousedown', (event) => {
-    offsetX = event.clientX - element.offsetLeft;
-    offsetY = event.clientY - element.offsetTop;
-    isDragging = true;
-  });
-
-  // When the user moves the mouse, reposition the element
-  document.addEventListener('mousemove', (event) => {
-    if (isDragging) {
-      element.style.left = `${event.clientX - offsetX}px`;
-      element.style.top = `${event.clientY - offsetY}px`;
-      // Save the new position in local storage
-      localStorage.setItem('playerTrackerPosition', JSON.stringify({
-        left: element.style.left,
-        top: element.style.top
-      }));
-      // console.log(`Saving position: ${element.style.left}:${element.style.top}`)
-    }
-  });
-
-  // When the user releases the mouse button, stop dragging
-  document.addEventListener('mouseup', () => {
-    isDragging = false;
-  });
-}
-
 function populateWithPlayers() {
   loadPlayers()
     .filter(p => !p.paused)
     .sort((a, b) => a.id - b.id)
     .forEach(p => addPlayerRow(p.id));
+}
+
+function loadPlayers() {
+  return JSON.parse(localStorage.getItem('locatorPlayers')) || []
+}
+
+async function addPlayerRow(id) {
+  const playerData = await fetchPlayerData(id);
+  const playerRow = createPlayerRow(playerData);
+  const playersDiv = document.getElementById('players');
+  playersDiv.appendChild(playerRow);
 }
 
 async function fetchPlayerData(id) {
@@ -182,11 +142,15 @@ async function fetchPlayerData(id) {
   return {id, name, location: `${country}, ${region}`, isOnline};
 }
 
-async function addPlayerRow(id) {
-  const playerData = await fetchPlayerData(id);
-  const playerRow = createPlayerRow(playerData);
-  const playersDiv = document.getElementById('players');
-  playersDiv.appendChild(playerRow);
+async function getPlayerData(id) {
+  const response = await fetch(`https://www.erepublik.com/en/main/citizen-profile-json-personal/${id}`, {
+    headers: {
+      Accept: 'application/json, text/plain, */*',
+      'User-Agent': navigator.userAgent,
+      Cookie: document.cookie
+    },
+  })
+  return await response.json();
 }
 
 function createPlayerRow({id, name, location, isOnline}) {
@@ -227,6 +191,42 @@ function removePlayerFromLocator(id) {
   savePlayers(players);
 }
 
+function savePlayers(players) {
+  localStorage.setItem('locatorPlayers', JSON.stringify(players))
+}
+
+function makeElementDraggable(element) {
+  let offsetX = 0;
+  let offsetY = 0;
+  let isDragging = false;
+
+  // When the user presses the mouse button, start dragging
+  element.addEventListener('mousedown', (event) => {
+    offsetX = event.clientX - element.offsetLeft;
+    offsetY = event.clientY - element.offsetTop;
+    isDragging = true;
+  });
+
+  // When the user moves the mouse, reposition the element
+  document.addEventListener('mousemove', (event) => {
+    if (isDragging) {
+      element.style.left = `${event.clientX - offsetX}px`;
+      element.style.top = `${event.clientY - offsetY}px`;
+      // Save the new position in local storage
+      localStorage.setItem('playerTrackerPosition', JSON.stringify({
+        left: element.style.left,
+        top: element.style.top
+      }));
+      // console.log(`Saving position: ${element.style.left}:${element.style.top}`)
+    }
+  });
+
+  // When the user releases the mouse button, stop dragging
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+  });
+}
+
 async function addPlayerToTracker() {
   const playerIdInput = document.getElementById('playerID');
   const id = playerIdInput.value;
@@ -244,22 +244,30 @@ async function addPlayerToTracker() {
 
 async function refreshPlayerTable() {
   console.log(`${new Date().toLocaleString()} - Refreshing location...`);
-  const playersDiv = document.getElementById('players');
 
-  // Clear the table
-  while (playersDiv.firstChild) {
-    playersDiv.removeChild(playersDiv.firstChild);
-  }
-
-  // Fetch data for all players and populate the table anew
+  // Fetch data for all players
   const players = loadPlayers().filter(p => !p.paused).sort((a, b) => a.id - b.id);
   const playerDataPromises = players.map(player => fetchPlayerData(player.id));
   const playersData = await Promise.all(playerDataPromises);
 
   playersData.forEach(data => {
-    const newRow = createPlayerRow(data);
-    playersDiv.appendChild(newRow);
+    const existingRow = document.getElementById(`player-${data.id}`);
+    if (existingRow) {
+      // The row already exists, so just update it
+      updatePlayerRow(existingRow, data);
+    } else {
+      // The row doesn't exist, so add a new one
+      const newRow = createPlayerRow(data);
+      document.getElementById('players').appendChild(newRow);
+    }
   });
+}
+
+function updatePlayerRow(row, {id, name, location, isOnline}) {
+  // Just update the name, location and online status columns
+  row.children[0].children[0].className = `col ${isOnline ? 'online' : 'offline'}`;
+  row.children[0].children[0].textContent = `${name} (${id})`;
+  row.children[1].textContent = location;
 }
 
 function applyStyles() {
