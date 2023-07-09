@@ -21,19 +21,10 @@
   let interval = localStorage.getItem('locator-interval');
   if (!interval) {
     interval = 60; // Set default interval to 60 seconds if not set
-    localStorage.setItem('locator-interval', interval); // Save it to local storage
+    localStorage.setItem('locator-interval', interval);
   }
   await renderPlayerLocatorDiv();
   setRefreshInterval('main function')
-
-  // Clear the table before populating
-  // const playersDiv = document.getElementById('players');
-  // while (playersDiv.firstChild) {
-  //   playersDiv.removeChild(playersDiv.firstChild);
-  // }
-
-  // Populate players after setting the interval
-  // await refreshPlayerTable('main function');
 })();
 
 function renderPlayerLocatorDiv() {
@@ -93,16 +84,6 @@ function setIntervalOfTracking(event) {
     alert('The interval must be between 5 and 3600 seconds.');
     return;
   }
-
-  // Cancel any existing timeout
-  // if (window.refreshTimeoutId) {
-  //   clearTimeout(window.refreshTimeoutId);
-  // }
-
-  // Start a new timeout
-  // Convert the interval from seconds to milliseconds, as required by setInterval
-  // const intervalMilliseconds = Number(interval) * 1000;
-  // window.refreshTimeoutId = setTimeout(() => refreshPlayerTable('interval'), intervalMilliseconds);
 
   localStorage.setItem('locator-interval', Number(interval));
   console.log(`Interval set to ${interval} seconds.`);
@@ -170,7 +151,7 @@ function createPlayerRow({id, name, location, isOnline}) {
     <td class="col"></td> 
     `;
 
-  row.children[2].appendChild(button); // append the button to the third cell
+  row.children[2].appendChild(button);
 
   return row;
 }
@@ -184,7 +165,6 @@ function removePlayerFromLocator(id) {
   let players = loadPlayers();
   players = players.filter(player => player.id !== id);
 
-  // Save the updated list of player IDs back to local storage
   savePlayers(players);
 }
 
@@ -214,7 +194,7 @@ function makeElementDraggable(element) {
         left: element.style.left,
         top: element.style.top
       }));
-      // console.log(`Saving position: ${element.style.left}:${element.style.top}`)
+      console.log(`Saving position: ${element.style.left}:${element.style.top}`)
     }
   });
 
@@ -238,13 +218,6 @@ async function addPlayerToTracker() {
 
   playerIdInput.value = '';
 
-  // After adding a player, clear the existing timeout and start a new one
-  // if (window.refreshTimeoutId) {
-  //   clearTimeout(window.refreshTimeoutId);
-  // }
-
-  // const intervalMilliseconds = Number(localStorage.getItem('locator-interval')) * 1000;
-  // window.refreshTimeoutId = setTimeout(() => refreshPlayerTable('addPlayer'), intervalMilliseconds);
   setRefreshInterval('addPlayer')
 }
 
@@ -268,13 +241,10 @@ async function refreshPlayerTable(caller) {
     }
   });
 
-  // const intervalMilliseconds = Number(localStorage.getItem('locator-interval')) * 1000;
-  // window.refreshTimeoutId = setTimeout(() => refreshPlayerTable('refresh player table'), intervalMilliseconds);
   setRefreshInterval('refresh player table')
 }
 
 function updatePlayerRow(row, {id, name, location, isOnline}) {
-  // Just update the name, location and online status columns
   row.children[0].children[0].className = `col ${isOnline ? 'online' : 'offline'}`;
   row.children[0].children[0].textContent = `${name} (${id})`;
   row.children[1].textContent = location;
