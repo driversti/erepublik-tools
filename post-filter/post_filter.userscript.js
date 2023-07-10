@@ -17,7 +17,7 @@
   'use strict';
 
   const bannedWords = [
-    "wordle","Congratulations, you entered the Top 100","*♥♥*","Link za glasanje"
+    "wordle","Congratulations, you entered the Top 100","*♥♥*"
   ]; // Add the words you want to filter out.
 
   function filterPosts() {
