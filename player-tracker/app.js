@@ -26,7 +26,7 @@ const TELEGRAM_TOKEN = process.env.TRACKER_TELEGRAM_TOKEN;
 const TELEGRAM_CHANNEL = process.env.TRACKER_TELEGRAM_CHANNEL;
 const EMAIL = process.env.EREP_EMAIL;
 const PASSWORD = process.env.EREP_PASSWORD;
-const PLAYER_ID = 8761086;
+const PLAYER_ID = process.env.TRACKER_PLAYER_ID;
 const INTERVAL = 30_000; // 30 seconds
 const BASE_URL = 'https://www.erepublik.com/en';
 const PROFILE_JSON_URL = `${BASE_URL}/main/citizen-profile-json-personal/${PLAYER_ID}`;
@@ -160,6 +160,10 @@ const run = async () => {
 
   // console.log(profileJson);
   // console.log(storage);
+  if (!profileJson || !profileJson.citizen || !profileJson.citizen.onlineStatus) {
+    console.log("Profile json is empty. Skipping...");
+    return;
+  }
   let currentOnlineStatus = profileJson.citizen.onlineStatus ? 'Online' : 'Offline';
   if (storage.lastOnlineStatus === currentOnlineStatus) {
     console.log(`Online status is the same (${currentOnlineStatus}). Skipping...`);
