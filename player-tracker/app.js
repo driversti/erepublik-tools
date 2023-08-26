@@ -158,12 +158,16 @@ const run = async () => {
   const profileJson = await fetchProfileJson();
   const storage = readStorageOrDefault();
 
-  // console.log(profileJson);
-  // console.log(storage);
-  if (!profileJson || !profileJson.citizen || !profileJson.citizen.onlineStatus) {
+  if (!profileJson) {
     console.log("Profile json is empty. Skipping...");
     return;
   }
+  if (!profileJson.citizen) {
+    console.log("Citizen is empty. Skipping...");
+    console.log(profileJson);
+    return;
+  }
+
   let currentOnlineStatus = profileJson.citizen.onlineStatus ? 'Online' : 'Offline';
   if (storage.lastOnlineStatus === currentOnlineStatus) {
     console.log(`Online status is the same (${currentOnlineStatus}). Skipping...`);
@@ -178,7 +182,7 @@ const run = async () => {
 
   let currentLocation = profileJson.location.residenceRegion.name;
   if (storage.lastLocation === currentLocation) {
-    console.log("Location is the same. Skipping...");
+    console.log(`Location is the same (${currentLocation}). Skipping...`);
   } else {
     console.log(`Location changed to ${currentLocation}. Sending message...`);
     const message = `*${profileJson.citizen.name}* is now in *${currentLocation}*`;
