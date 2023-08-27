@@ -174,3 +174,5 @@ Temporary Items
 
 **/node_modules
 **/dist
+player-tracker/Dockerfile
+player-tracker/storage.json

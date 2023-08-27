@@ -5,15 +5,66 @@ const cheerio = require('cheerio');
 
 const USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36'
 const APPLICATION_FORM_URLENCODED = 'application/x-www-form-urlencoded';
+const TELEGRAM_TOKEN = process.env.TRACKER_TELEGRAM_TOKEN;
+const TELEGRAM_CHANNEL = process.env.TRACKER_TELEGRAM_CHANNEL;
+const EMAIL = process.env.EREP_EMAIL;
+const PASSWORD = process.env.EREP_PASSWORD;
+const PLAYER_ID = process.env.TRACKER_PLAYER_ID;
+const INTERVAL = 30_000; // 30 seconds
+const BASE_URL = 'https://www.erepublik.com/en';
+const PROFILE_JSON_URL = `/main/citizen-profile-json-personal/${PLAYER_ID}`;
+const filename = 'storage.json';
 
 const jar = new CookieJar();
 const client = axios.create({
+  baseURL: BASE_URL,
   headers: {
     'User-Agent': USER_AGENT
   },
   withCredentials: true,
   jar: jar
 });
+
+let authorized = false;
+let _token = null;
+let erpk = null;
+let runIntervalId;
+let tokenIntervalId;
+
+const ONE_YEAR_IN_SECONDS = 31536000;  // 365 days × 24 hours × 60 minutes × 60 seconds
+
+// Helper function to set expiration date to 1 year from now
+const setExpirationToOneYear = (cookie) => {
+  const oneYearFromNow = new Date();
+  oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+  return cookie.replace(/expires=[^;]*/, 'expires=' + oneYearFromNow.toUTCString())
+    .replace(/Max-Age=[^;]*/, 'Max-Age=' + ONE_YEAR_IN_SECONDS);
+};
+
+// Interceptor
+client.interceptors.response.use((response) => {
+  // Update the Set-Cookie header
+  if (response.headers['set-cookie']) {
+    response.headers['set-cookie'] = response.headers['set-cookie'].map(cookie => {
+      return cookie.startsWith('erpk=') ? setExpirationToOneYear(cookie) : cookie;
+    });
+  }
+
+  // Update the erpk-maxage and erpk-expires headers
+  if (response.headers['erpk-maxage']) {
+    response.headers['erpk-maxage'] = ONE_YEAR_IN_SECONDS.toString();
+  }
+
+  if (response.headers['erpk-expires']) {
+    const newExpirationTimestamp = Math.floor((new Date().getTime() / 1000) + ONE_YEAR_IN_SECONDS);
+    response.headers['erpk-expires'] = newExpirationTimestamp.toString();
+  }
+
+  return response;
+}, (error) => {
+  return Promise.reject(error);
+});
+
 
 wrapper(client);
 
@@ -22,18 +73,7 @@ const path = require('path');
 const qs = require('qs');
 const TelegramBot = require('node-telegram-bot-api');
 
-const TELEGRAM_TOKEN = process.env.TRACKER_TELEGRAM_TOKEN;
-const TELEGRAM_CHANNEL = process.env.TRACKER_TELEGRAM_CHANNEL;
-const EMAIL = process.env.EREP_EMAIL;
-const PASSWORD = process.env.EREP_PASSWORD;
-const PLAYER_ID = process.env.TRACKER_PLAYER_ID;
-const INTERVAL = 30_000; // 30 seconds
-const BASE_URL = 'https://www.erepublik.com/en';
-const PROFILE_JSON_URL = `${BASE_URL}/main/citizen-profile-json-personal/${PLAYER_ID}`;
-const filename = 'storage.json';
-
 const bot = new TelegramBot(TELEGRAM_TOKEN, {polling: true});
-var authorized = false;
 
 function getLoginPage() {
   console.log("Fetching login page...");
@@ -68,7 +108,7 @@ function extractToken(responseData) {
 
 function login(token) {
   console.log("Logging in...");
-  const url = `${BASE_URL}/login`;
+  const url = '/login';
   return new Promise((resolve, reject) => {
     jar.getCookies(url, (err, cookies) => {
       if (err) {
@@ -105,30 +145,75 @@ function loginError(error) {
 async function createSession() {
   const loginHTML = await getLoginPage();
   const token = extractToken(loginHTML.data);
+  console.log(`Initial token: ${token}`);
   const homePage = await login(token);
   // console.log(homePage.data);
+  _token = extractToken(homePage.data);
+  console.log(`Session Token: ${_token}`);
+  const erpkCookie = jar.serializeSync().cookies.find(cookie => cookie.key === 'erpk');
+  if (erpkCookie) {
+    console.log(`ERPK: ${erpkCookie.value}`);
+    erpk = erpkCookie.value;
+  } else {
+    console.log('Cookie with key "erpk" not found.');
+  }
+}
+
+async function keepTokenAlive() {
+  console.log("Keeping token alive...");
+  const url = '/economy/marketplaceAjax';
+  const payload = qs.stringify({
+    countryId: 72,
+    industryId: 3,
+    quality: 2,
+    orderBy: 'price_asc',
+    currentPage: 1,
+    ajaxMarket: 1,
+    _token: _token,
+  })
+  // console.log(payload);
+  // console.log(jar.getCookieStringSync(BASE_URL));
+  const response = await client.post(url, payload, {
+    headers: {
+      'Accept': 'application/json, */*; q=0.01',
+      'Content-Type': APPLICATION_FORM_URLENCODED,
+      'User-Agent': USER_AGENT,
+      'Cookie': `erpk=${erpk}`,
+    },
+    withCredentials: true
+  });
+  // console.log("Keep-Alive Request Headers:", response.config.headers);
+  // console.log("Keep-Alive Response Headers:", response.headers);
+  console.log(`Q3 tickets: ${response.data.offers.length}`);
 }
 
 async function fetchProfileJson() {
-  console.log(`Fetching profile json ${PROFILE_JSON_URL}`);
+  console.log(`Fetching profile json ${BASE_URL}${PROFILE_JSON_URL}`);
   try {
-    jar.getCookies(PROFILE_JSON_URL, (err, cookies) => {
-      if (err) {
-        console.error("Error retrieving cookies:", err);
-        return;
+    // const erpkCookie = jar.getCookiesSync(BASE_URL).find(cookie => cookie.key === 'erpk');
+    // if (erpkCookie) {
+    //   console.log(`ERPK: ${erpkCookie}`);
+    //   client.defaults.headers.Cookie = `erpk=${erpk}`;
+    // }
+    const response = await client.get(PROFILE_JSON_URL, {
+      headers: {
+        'Cookie': `erpk=${erpk}`,
+        'User-Agent': USER_AGENT,
+        'Accept': 'application/json, text/plain, */*'
       }
-      // console.log("Cookies for the request:", cookies.join('; '));
     });
-
-    // console.log('Headers:', client.defaults.headers);
-
-    const response = await client.get(PROFILE_JSON_URL);
+    // console.log("Request Headers:", response.config.headers);
+    // console.log("Response Headers:", response.headers);
+    // if (response.headers['set-cookie']) {
+    //   console.log("Cookies:", response.headers['set-cookie']);
+    // }
     return response.data;
   } catch (e) {
     console.error("Error while fetching profile json", e);
     if (e.response && e.response.status === 401) {
       authorized = false;
       await createSession();
+      return await fetchProfileJson();
     }
     // Re-throw the error if you want the caller to know about it
     throw e;
@@ -165,6 +250,14 @@ const run = async () => {
   if (!profileJson.citizen) {
     console.log("Citizen is empty. Skipping...");
     console.log(profileJson);
+    // if (profileJson === { error: 'not_authorized' }) {
+    //   await createSession();
+    // } else {
+    //   console.error("Unknown error. Termination...")
+    //   return;
+    // }
+    clearInterval(runIntervalId);
+    clearInterval(tokenIntervalId);
     return;
   }
 
@@ -194,4 +287,5 @@ const run = async () => {
 }
 
 run();
-setInterval(run, INTERVAL);
+runIntervalId = setInterval(run, INTERVAL);
+tokenIntervalId = setInterval(keepTokenAlive, 1000 * 60 * 12);
