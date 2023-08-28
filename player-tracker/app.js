@@ -276,7 +276,7 @@ const run = async () => {
   let currentLocation = profileJson.location.residenceRegion.name;
   let currentCountry = profileJson.location.residenceCountry.name;
   if (storage.lastLocation === currentLocation) {
-    console.log(`Location is the same (${currentLocation}). Skipping...`);
+    console.log(`Location is the same (${currentLocation}, ${currentCountry}). Skipping...`);
   } else {
     console.log(`Location changed to ${currentLocation}. Sending message...`);
     const message = `[*${profileJson.citizen.name}*](https://www.erepublik.com/en/citizen/profile/${PLAYER_ID}) is now in *${currentLocation}, ${currentCountry}*`;
