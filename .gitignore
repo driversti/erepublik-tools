@@ -172,3 +172,7 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+**/node_modules
+**/bower_components
+**/dist
+donation-alert/latest_date.txt
