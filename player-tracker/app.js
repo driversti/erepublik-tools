@@ -279,9 +279,9 @@ const run = async () => {
     console.log(`Location is the same (${currentLocation}, ${currentCountry}). Skipping...`);
   } else {
     console.log(`Location changed to ${currentLocation}. Sending message...`);
-    const message = `[*${profileJson.citizen.name}*](https://www.erepublik.com/en/citizen/profile/${PLAYER_ID}) is now in *${currentLocation}, ${currentCountry}*`;
+    const message = `<a href="https://www.erepublik.com/en/citizen/profile/${PLAYER_ID}">${profileJson.citizen.name}</a> is now in <b>${currentLocation}, ${currentCountry}</b>`;
     await bot.sendMessage(TELEGRAM_CHANNEL, message, {
-      parse_mode: 'Markdown',
+      parse_mode: 'HTML',
       disable_web_page_preview: true
     });
     storage.lastLocation = currentLocation;
