@@ -3,10 +3,11 @@ const Parser = require('rss-parser');
 let parser = new Parser();
 const moment = require('moment-timezone');
 
-const TELEGRAM_TOKEN = process.env.ELITHUANIA_TELEGRAM_TOKEN;
-const TELEGRAM_CHANNEL = process.env.ELITHUANIA_TELEGRAM_CHANNEL;
-// const TELEGRAM_CHANNEL = -1001934672647;
-const RSS_FEED_URL = 'https://www.erepublik.com/en/main/news/military/all/Lithuania/0/rss';
+const TELEGRAM_TOKEN = process.env.COUNTRY_TELEGRAM_TOKEN;
+const TELEGRAM_CHANNEL = process.env.COUNTRY_TELEGRAM_CHANNEL;
+const COUNTRY = process.env.COUNTRY;
+const COUNTRY_TZ = process.env.COUNTRY_TZ;
+const RSS_FEED_URL = `https://www.erepublik.com/en/main/news/military/all/${COUNTRY}/0/rss`;
 const CHECK_INTERVAL = 10 * 1000; // Checking every 10 seconds
 const DATE_FILE = 'latest_date.txt';
 
@@ -27,7 +28,7 @@ function saveLatestDate(date) {
 }
 
 function formatMessage(item) {
-  const itemDate = moment(item.pubDate).tz("Europe/Vilnius").format("YYYY-MM-DD HH:mm:ss");
+  const itemDate = moment(item.pubDate).tz(COUNTRY_TZ).format("YYYY-MM-DD HH:mm:ss");
   const regex = /<a href="([^"]*)">([^<]*)<\/a>/;
   const match = item.content.match(regex);
   if (match) {
