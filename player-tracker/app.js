@@ -274,12 +274,16 @@ const run = async () => {
   }
 
   let currentLocation = profileJson.location.residenceRegion.name;
+  let currentCountry = profileJson.location.residenceCountry.name;
   if (storage.lastLocation === currentLocation) {
     console.log(`Location is the same (${currentLocation}). Skipping...`);
   } else {
     console.log(`Location changed to ${currentLocation}. Sending message...`);
-    const message = `*${profileJson.citizen.name}* is now in *${currentLocation}*`;
-    await bot.sendMessage(TELEGRAM_CHANNEL, message, {parse_mode: 'Markdown'});
+    const message = `[*${profileJson.citizen.name}*](https://www.erepublik.com/en/citizen/profile/${PLAYER_ID}) is now in *${currentLocation}, ${currentCountry}*`;
+    await bot.sendMessage(TELEGRAM_CHANNEL, message, {
+      parse_mode: 'Markdown',
+      disable_web_page_preview: true
+    });
     storage.lastLocation = currentLocation;
     storage.lastCheck = new Date().toISOString();
     fs.writeFileSync(filename, JSON.stringify(storage));
