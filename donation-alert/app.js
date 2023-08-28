@@ -41,21 +41,36 @@ function formatMessage(item) {
 
 async function checkForUpdates() {
   let feed = await parser.parseURL(RSS_FEED_URL);
-  for (let item of feed.items) {
+
+  // Reverse the items array, so we start with the oldest item
+  let reversedItems = [...feed.items].reverse();
+
+  // Collect all message to send in one go
+  let messages = [];
+
+  for (let item of reversedItems) {
     let itemDate = new Date(item.pubDate);
     if (itemDate > latestPubDate) {
       let message = formatMessage(item);
       console.log(message);
-      let response = await bot.sendMessage(TELEGRAM_CHANNEL, message, {
-        parse_mode: 'HTML',
-        disable_web_page_preview: true
-      });
-      // console.log(response);
+      messages.push(message); // Add formatted message to the messages array
       latestPubDate = itemDate;
-      saveLatestDate(latestPubDate);
+      saveLatestDate(latestPubDate); // Save the latest date to file after each item
     }
   }
+
+  if (messages.length > 0) {
+    let combinedMessage = messages.join('\n\n'); // Join messages with two newline characters
+
+    let response = await bot.sendMessage(TELEGRAM_CHANNEL, combinedMessage, {
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
+    });
+
+    // console.log(response);
+  }
 }
+
 
 loadLatestDate();
 checkForUpdates();
