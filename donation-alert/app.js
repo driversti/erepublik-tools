@@ -40,12 +40,18 @@ function formatMessage(item) {
 }
 
 async function checkForUpdates() {
-  let feed = await parser.parseURL(RSS_FEED_URL);
+  parser.parseURL(RSS_FEED_URL)
+    .then(feed => collectNewItemsAndSend(feed))
+    .catch(error => {
+      console.error("Error fetching the RSS feed:", error);
+    });
+}
 
-  // Reverse the items array, so we start with the oldest item
+function collectNewItemsAndSend(feed) {
+  // Reverse the items array, so you start with the oldest item
   let reversedItems = [...feed.items].reverse();
 
-  // Collect all message to send in one go
+  // Collect all messages in an array and send them all at once at the end
   let messages = [];
 
   for (let item of reversedItems) {
@@ -55,19 +61,16 @@ async function checkForUpdates() {
       console.log(message);
       messages.push(message); // Add formatted message to the messages array
       latestPubDate = itemDate;
-      saveLatestDate(latestPubDate); // Save the latest date to file after each item
+      saveLatestDate(latestPubDate);
     }
   }
 
   if (messages.length > 0) {
     let combinedMessage = messages.join('\n\n'); // Join messages with two newline characters
-
-    let response = await bot.sendMessage(TELEGRAM_CHANNEL, combinedMessage, {
+    return bot.sendMessage(TELEGRAM_CHANNEL, combinedMessage, {
       parse_mode: 'HTML',
       disable_web_page_preview: true
     });
-
-    // console.log(response);
   }
 }
 
