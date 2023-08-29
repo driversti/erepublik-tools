@@ -267,7 +267,7 @@ const run = async () => {
   } else {
     console.log(`Online status changed (${currentOnlineStatus}). Sending message...`);
     const message = `*${profileJson.citizen.name}* is now *${currentOnlineStatus}*`;
-    await bot.sendMessage(TELEGRAM_CHANNEL, message, {parse_mode: 'Markdown'});
+    // await bot.sendMessage(TELEGRAM_CHANNEL, message, {parse_mode: 'Markdown'});
     storage.lastOnlineStatus = currentOnlineStatus;
     storage.lastCheck = new Date().toISOString();
     await fs.promises.writeFile(filename, JSON.stringify(storage));
