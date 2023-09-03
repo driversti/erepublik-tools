@@ -175,4 +175,4 @@ Temporary Items
 **/node_modules
 **/bower_components
 **/dist
-donation-alert/latest_date.txt
+country-events/latest_*_date.txt

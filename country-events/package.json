@@ -1,6 +1,6 @@
 {
-  "name": "donation-alert",
-  "version": "1.0.0",
+  "name": "country-events",
+  "version": "2.0.0",
   "description": "",
   "main": "app.js",
   "scripts": {
