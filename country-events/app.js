@@ -3,11 +3,14 @@ let parser = new Parser();
 const TelegramBot = require('node-telegram-bot-api');
 const fs = require("fs");
 const moment = require('moment-timezone');
+const config = require('./config');
 
 const COUNTRY_ID = parseInt(process.env.COUNTRY_ID);
+console.log(COUNTRY_ID);
 const TELEGRAM_TOKEN = process.env.COUNTRY_TELEGRAM_TOKEN;
-const TELEGRAM_LAWS_CHANNEL = process.env.COUNTRY_LAWS_TELEGRAM_CHANNEL;
-const TELEGRAM_BATTLES_CHANNEL = process.env.COUNTRY_BATTLES_TELEGRAM_CHANNEL;
+console.log(TELEGRAM_TOKEN);
+const TELEGRAM_LAWS_CHANNEL = config.getLawChannel(COUNTRY_ID);
+const TELEGRAM_BATTLES_CHANNEL = config.getBattlesChannel(COUNTRY_ID);
 
 const CHECK_INTERVAL = 10 * 1000; // Checking every 10 seconds
 const LATEST_LAW_FILE = 'latest_law_date.txt';
@@ -16,65 +19,8 @@ const bot = new TelegramBot(TELEGRAM_TOKEN);
 
 let latestPubDate = new Date(0); // Initialize with the earliest possible date.
 
-const COUNTRIES = {
-  map: new Map([
-    [19, {
-      name: 'Indonesia',
-      nativeName: 'Indonesia',
-      encodedName: 'Indonesia',
-      lang: 'en',
-      tz: 'Asia/Jakarta'
-    }],
-    [40, {
-      name: 'Ukraine',
-      nativeName: 'Україна',
-      encodedName: 'Ukraine',
-      lang: 'en',
-      tz: 'Europe/Kyiv'
-    }],
-    [57, {
-      name: 'Pakistan',
-      nativeName: 'Pakistan',
-      encodedName: 'Pakistan',
-      lang: 'en',
-      tz: 'Asia/Karachi'
-    }],
-    [72, {
-      name: 'Lithuania',
-      nativeName: 'Lithuania',
-      encodedName: 'Lithuania',
-      lang: 'en',
-      tz: 'Europe/Vilnius'
-    }]
-  ]),
-
-  getEncodedName: function (countryId) {
-    return this.map.get(countryId).encodedName;
-  },
-
-  getName: function (countryId) {
-    return this.map.get(countryId).name;
-  },
-
-  getNativeName: function (countryId) {
-    return this.map.get(countryId).nativeName;
-  },
-
-  getLang: function (countryId) {
-    return this.map.get(countryId).lang;
-  },
-
-  getTZ: function (countryId) {
-    return this.map.get(countryId).tz;
-  },
-
-  getRssFeed: function (countryId, page = 1) {
-    return `https://www.erepublik.com/${this.getLang(countryId)}/main/news/military/all/all/${page}/rss`;
-  }
-}
-
 const BROKEN_LINK_REGEX = new RegExp(`https:\/\/www\.erepublik\.com\<b\>.*\<\/b\>$`);
-const LAW_REGEX = new RegExp(`https://www.erepublik.com/(?:${COUNTRIES.getLang(COUNTRY_ID)}|en)/main/law/`);
+const LAW_REGEX = new RegExp(`https://www.erepublik.com/(?:${config.getLang(COUNTRY_ID)}|en)/main/law/`);
 
 function checkForUpdates(url) {
   parser.parseURL(url)
@@ -141,17 +87,17 @@ function battlesOnly(item) {
 }
 
 function hasResistanceStarted(item) {
-  const regex = new RegExp(`https://www.erepublik.com/(?:${COUNTRIES.getLang(COUNTRY_ID)}|en)/wars/show/`);
+  const regex = new RegExp(`https://www.erepublik.com/(?:${config.getLang(COUNTRY_ID)}|en)/wars/show/`);
   return regex.test(item.link);
 }
 
 function hasSecured(item) {
-  const regex = new RegExp(`https://www.erepublik.com/(?:${COUNTRIES.getLang(COUNTRY_ID)}|en)/wars/show/`);
+  const regex = new RegExp(`https://www.erepublik.com/(?:${config.getLang(COUNTRY_ID)}|en)/wars/show/`);
   return regex.test(item.link);
 }
 
 function hasAttacked(item) {
-  const regex = new RegExp(`https://www.erepublik.com/(?:${COUNTRIES.getLang(COUNTRY_ID)}|en)/military/battlefield/`);
+  const regex = new RegExp(`https://www.erepublik.com/(?:${config.getLang(COUNTRY_ID)}|en)/military/battlefield/`);
   return regex.test(item.link);
 }
 
@@ -168,13 +114,13 @@ function brokenLink(item) {
 }
 
 function forCountryOnly(item) {
-  return item.link.indexOf(COUNTRIES.getEncodedName(COUNTRY_ID)) !== -1
-    || item.content.indexOf(COUNTRIES.getName(COUNTRY_ID)) !== -1
-    || item.content.indexOf(COUNTRIES.getNativeName(COUNTRY_ID)) !== -1;
+  return item.link.indexOf(config.getEncodedName(COUNTRY_ID)) !== -1
+    || item.content.indexOf(config.getName(COUNTRY_ID)) !== -1
+    || item.content.indexOf(config.getNativeName(COUNTRY_ID)) !== -1;
 }
 
 function createClearItems(item) {
-  const tz = COUNTRIES.getTZ(COUNTRY_ID);
+  const tz = config.getTZ(COUNTRY_ID);
   const itemDate = moment(item.pubDate).tz(tz).format("YYYY-MM-DD HH:mm:ss");
   if (BROKEN_LINK_REGEX.test(item.link)) {
     const urlMatch = item.content.match(/<a href="([^"]+)">/);
@@ -209,8 +155,8 @@ function saveLatestDate(fileName, date) {
 
 loadLatestDate(LATEST_LAW_FILE);
 loadLatestDate(LATEST_BATTLE_FILE);
-checkForUpdates(COUNTRIES.getRssFeed(COUNTRY_ID));
-setInterval(() => checkForUpdates(COUNTRIES.getRssFeed(COUNTRY_ID)), CHECK_INTERVAL);
+checkForUpdates(config.getRssFeed(COUNTRY_ID));
+setInterval(() => checkForUpdates(config.getRssFeed(COUNTRY_ID)), CHECK_INTERVAL);
 
 // checkForUpdates(COUNTRIES.getRssFeed(COUNTRY_ID, 2));
 // checkForUpdates(COUNTRIES.getRssFeed(COUNTRY_ID, 3));
