@@ -1,6 +1,61 @@
+class Country {
+  constructor({
+                id,
+                name,
+                nativeName,
+                encodedName,
+                lang,
+                tz,
+                lawChannel,
+                battlesChannel,
+                lawLastUpdated,
+                battlesLastUpdated
+              }) {
+    this.id = id;
+    this.name = name;
+    this.nativeName = nativeName;
+    this.encodedName = encodedName;
+    this.lang = lang;
+    this.tz = tz;
+    this.lawChannel = lawChannel;
+    this.battlesChannel = battlesChannel;
+    this.lawLastUpdated = lawLastUpdated;
+    this.battlesLastUpdated = battlesLastUpdated;
+  }
+
+  getLawsLastUpdated() {
+    return this.lawLastUpdated;
+  }
+
+  setLawsLastUpdated(date) {
+    this.lawLastUpdated = date;
+  }
+
+  getBattlesLastUpdated() {
+    return this.battlesLastUpdated;
+  }
+
+  setBattlesLastUpdated(date) {
+    this.battlesLastUpdated = date;
+  }
+}
+
 const config = {
   map: new Map([
-    [19, {
+    [11, new Country({
+      id: 11,
+      name: 'France',
+      nativeName: 'France',
+      encodedName: 'France',
+      lang: 'en',
+      tz: 'Europe/Paris',
+      lawChannel: '-1001807856149',
+      battlesChannel: '-1001807856149',
+      lawLastUpdated: new Date(0),
+      battlesLastUpdated: new Date(0),
+    })],
+    [19, new Country({
+      id: 19,
       name: 'Indonesia',
       nativeName: 'Indonesia',
       encodedName: 'Indonesia',
@@ -8,10 +63,11 @@ const config = {
       tz: 'Asia/Jakarta',
       lawChannel: '-1001807856149',
       battlesChannel: '-1001807856149',
-      lawLastUpdated: null,
-      battlesLastUpdated: null,
-    }],
-    [40, {
+      lawLastUpdated: new Date(0),
+      battlesLastUpdated: new Date(0),
+    })],
+    [40, new Country({
+      id: 40,
       name: 'Ukraine',
       nativeName: 'Україна',
       encodedName: 'Ukraine',
@@ -19,10 +75,11 @@ const config = {
       tz: 'Europe/Kyiv',
       lawChannel: '-1001807856149',
       battlesChannel: '-1001807856149',
-      lawLastUpdated: null,
-      battlesLastUpdated: null,
-    }],
-    [57, {
+      lawLastUpdated: new Date(0),
+      battlesLastUpdated: new Date(0),
+    })],
+    [57, new Country({
+      id: 57,
       name: 'Pakistan',
       nativeName: 'Pakistan',
       encodedName: 'Pakistan',
@@ -30,10 +87,11 @@ const config = {
       tz: 'Asia/Karachi',
       lawChannel: '-1001807856149',
       battlesChannel: '-1001807856149',
-      lawLastUpdated: null,
-      battlesLastUpdated: null,
-    }],
-    [72, {
+      lawLastUpdated: new Date(0),
+      battlesLastUpdated: new Date(0),
+    })],
+    [72, new Country({
+      id: 72,
       name: 'Lithuania',
       nativeName: 'Lithuania',
       encodedName: 'Lithuania',
@@ -41,9 +99,9 @@ const config = {
       tz: 'Europe/Vilnius',
       lawChannel: '-1001807856149',
       battlesChannel: '-1001807856149',
-      lawLastUpdated: null,
-      battlesLastUpdated: null,
-    }]
+      lawLastUpdated: new Date(0),
+      battlesLastUpdated: new Date(0),
+    })]
   ]),
 
   getEncodedName: function (countryId) {
