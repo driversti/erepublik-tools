@@ -172,7 +172,10 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+.idea/jsLibraryMappings.xml
 **/node_modules
-**/bower_components
 **/dist
-country-events/latest_*_date.txt
+player-tracker/Dockerfile
+player-tracker/storage.json
+statistics/eRepublik.xlsx
+statistics/src/eRepublik.xlsx
