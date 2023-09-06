@@ -8,10 +8,9 @@ const hrtime = process.hrtime;
 
 const TELEGRAM_TOKEN = process.env.COUNTRY_TELEGRAM_TOKEN;
 const RSS_FEED_ALL = "https://www.erepublik.com/en/main/news/military/all/all/1/rss"
+// const RSS_FEED_ALL = "https://www.erepublik.com/en/main/news/military/all/Lithuania/1/rss"
 const CHECK_INTERVAL = 10 * 1000; // Checking every 10 seconds
 const bot = new TelegramBot(TELEGRAM_TOKEN);
-
-const BROKEN_LINK_REGEX = new RegExp(`https:\/\/www\.erepublik\.com\<b\>.*\<\/b\>$`);
 
 function checkForUpdates(url) {
   parser.parseURL(url)
@@ -113,7 +112,8 @@ function hasAttacked(item, countryId) {
 }
 
 function lawsOnly(item, countryId) {
-  return lawLink(item, countryId) || brokenLink(item, countryId);
+  return lawLink(item, countryId)
+    || (isCountryNameWithTagInLink(item) || isHostDoubledInLink(item, countryId))
 }
 
 function lawLink(item, countryId) {
@@ -121,8 +121,14 @@ function lawLink(item, countryId) {
   return LAW_REGEX.test(item.link);
 }
 
-function brokenLink(item) {
+function isCountryNameWithTagInLink(item) {
+  const BROKEN_LINK_REGEX = new RegExp(`https:\/\/www\.erepublik\.com\<b\>.*\<\/b\>$`);
   return BROKEN_LINK_REGEX.test(item.link);
+}
+
+function isHostDoubledInLink(item, countryId) {
+  const regexp = new RegExp(`https://www.erepublik.com//www.erepublik.com/(?:${config.getLang(countryId)}|en)/main/law/`);
+  return regexp.test(item.link);
 }
 
 function forCountryOnly(item, countryId) {
@@ -134,7 +140,7 @@ function forCountryOnly(item, countryId) {
 function prepareItemsForSending(item, countryId) {
   const tz = config.getTZ(countryId);
   const itemDate = moment(item.pubDate).tz(tz).format("YYYY-MM-DD HH:mm:ss");
-  if (BROKEN_LINK_REGEX.test(item.link)) {
+  if (isCountryNameWithTagInLink(item.link)) {
     const urlMatch = item.content.match(/<a href="([^"]+)">/);
     const url = urlMatch ? "https://www.erepublik.com" + urlMatch[1] : null;
     const cleanedContent = item.content.replace(/\/\/www\.erepublik\.com<b>/g, "")
@@ -144,6 +150,12 @@ function prepareItemsForSending(item, countryId) {
     // console.log(`${cleanedContent}, ${url}`);
     return {text: cleanedContent, url: url, time: itemDate};
   }
+
+  if (isHostDoubledInLink(item, countryId)) {
+    const cleanedLink = item.link.replace("//www.erepublik.com", "");
+    return {text: item.content, url: cleanedLink, time: itemDate};
+  }
+
   const regex = /<a href="([^"]*)">([^<]*)<\/a>/;
   const match = item.content.match(regex);
   if (match) {
