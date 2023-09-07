@@ -41,6 +41,55 @@ class Country {
 }
 
 const config = {
+
+  getEncodedName: function (countryId) {
+    return this.map.get(countryId).encodedName;
+  },
+
+  getName: function (countryId) {
+    return this.map.get(countryId).name;
+  },
+
+  getNativeName: function (countryId) {
+    return this.map.get(countryId).nativeName;
+  },
+
+  getLang: function (countryId) {
+    return this.map.get(countryId).lang;
+  },
+
+  getTZ: function (countryId) {
+    return this.map.get(countryId).tz;
+  },
+
+  getRssFeed: function (countryId, page = 1) {
+    return `https://www.erepublik.com/${this.getLang(countryId)}/main/news/military/all/all/${page}/rss`;
+  },
+
+  getLawChannel: function (countryId) {
+    return this.map.get(countryId).lawChannel;
+  },
+
+  getBattlesChannel: function (countryId) {
+    return this.map.get(countryId).battlesChannel;
+  },
+
+  getLawLastUpdated: function (countryId) {
+    return this.map.get(countryId).lawLastUpdated;
+  },
+
+  setLawLastUpdated: function (countryId, date) {
+    this.map.get(countryId).lawLastUpdated = date;
+  },
+
+  getBattlesLastUpdated: function (countryId) {
+    return this.map.get(countryId).battlesLastUpdated;
+  },
+
+  setBattlesLastUpdated: function (countryId, date) {
+    this.map.get(countryId).battlesLastUpdated = date;
+  },
+
   map: new Map([
     // [11, new Country({
     //   id: 11,
@@ -102,55 +151,7 @@ const config = {
       lawLastUpdated: new Date(0),
       battlesLastUpdated: new Date(0),
     })]
-  ]),
-
-  getEncodedName: function (countryId) {
-    return this.map.get(countryId).encodedName;
-  },
-
-  getName: function (countryId) {
-    return this.map.get(countryId).name;
-  },
-
-  getNativeName: function (countryId) {
-    return this.map.get(countryId).nativeName;
-  },
-
-  getLang: function (countryId) {
-    return this.map.get(countryId).lang;
-  },
-
-  getTZ: function (countryId) {
-    return this.map.get(countryId).tz;
-  },
-
-  getRssFeed: function (countryId, page = 1) {
-    return `https://www.erepublik.com/${this.getLang(countryId)}/main/news/military/all/all/${page}/rss`;
-  },
-
-  getLawChannel: function (countryId) {
-    return this.map.get(countryId).lawChannel;
-  },
-
-  getBattlesChannel: function (countryId) {
-    return this.map.get(countryId).battlesChannel;
-  },
-
-  getLawLastUpdated: function (countryId) {
-    return this.map.get(countryId).lawLastUpdated;
-  },
-
-  setLawLastUpdated: function (countryId, date) {
-    this.map.get(countryId).lawLastUpdated = date;
-  },
-
-  getBattlesLastUpdated: function (countryId) {
-    return this.map.get(countryId).battlesLastUpdated;
-  },
-
-  setBattlesLastUpdated: function (countryId, date) {
-    this.map.get(countryId).battlesLastUpdated = date;
-  }
+  ])
 }
 
 module.exports = config;

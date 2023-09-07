@@ -6,7 +6,8 @@ const moment = require('moment-timezone');
 const config = require('./config');
 const hrtime = process.hrtime;
 
-const TELEGRAM_TOKEN = process.env.COUNTRY_TELEGRAM_TOKEN;
+// const TELEGRAM_TOKEN = process.env.COUNTRY_TELEGRAM_TOKEN;
+const TELEGRAM_TOKEN = "6055803957:AAFj3G46H8OGg_uZETFk4Sf5pd8kIzFG1JQ";
 const RSS_FEED_ALL = "https://www.erepublik.com/en/main/news/military/all/all/1/rss"
 // const RSS_FEED_ALL = "https://www.erepublik.com/en/main/news/military/all/Lithuania/1/rss"
 const CHECK_INTERVAL = 10 * 1000; // Checking every 10 seconds
