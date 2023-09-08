@@ -52,7 +52,7 @@ function handleLaws(reversedItems, country) {
   if (message.length <= 0) {
     return;
   }
-  send(message, country.battlesChannel);
+  send(message, country.lawChannel);
 }
 
 function handleBattles(reversedItems, country) {
