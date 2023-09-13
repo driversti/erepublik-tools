@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Tracking Active Medals
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      1.0
 // @description  Tracking Active Medals in eRepublik to make it easier to protect them and not get lost when there are plenty of them.
 // @author       driversti https://www.erepublik.com/en/citizen/ptofile/4690052
 // @match        https://www.erepublik.com/*
@@ -54,7 +54,7 @@ function renderMedalContainer(parent) {
 
   parent.appendChild(medalContainer);
 
-  addNoActiveMedals();
+  addMedalReplacer('Press refresh to load active medals.');
 }
 
 function renderRefreshButton(parent) {
@@ -86,6 +86,7 @@ function fetchActiveMedals() {
 function showActiveMedals(data) {
   const container = document.getElementById('medal-container')
   removeChildren(container)
+  console.log('Old medals removed.');
 
   // console.log(data.battles);
   let battlesWithActiveZones = [];
@@ -110,7 +111,7 @@ function showActiveMedals(data) {
   }
 
   if (battlesWithActiveZones.length === 0) {
-    addNoActiveMedals()
+    addMedalReplacer('No active medals found')
     return;
   }
 
@@ -124,11 +125,8 @@ function showActiveMedals(data) {
   })
     .then(response => response.json())
     .then(data => {
-      battlesWithActiveZones.forEach(it => {
-        const battle = data.battles[it.battleId];
-        // console.log(battle.region.name);
-        addMedal(it, battle);
-      })
+      battlesWithActiveZones.forEach(it => it.battle = data.battles[it.battleId])
+      addMedals(battlesWithActiveZones);
     })
     .catch(error => notifyDeveloper(error))
 }
@@ -152,20 +150,27 @@ function notifyDeveloper(error) {
     .catch(error => console.error(`Cannot open a new message to the Developer page: ${error}`));
 }
 
-function addNoActiveMedals() {
+function addMedalReplacer(text) {
   let container = document.getElementById('medal-container');
   let div = document.createElement('div');
-  div.innerText = 'No active medals';
+  div.innerText = text;
   div.className = 'medal-item';
   container.appendChild(div);
 }
 
-function addMedal(stat, battle) {
+function addMedals(medals) {
+  console.log("Adding medals...");
+  medals.sort((a, b) => b.battle.start - a.battle.start);
+  medals.forEach(it => addMedal(it));
+  console.log("Medals added.");
+}
+
+function addMedal(stat) {
   let container = document.getElementById('medal-container');
   const div = document.createElement('div');
   const a = document.createElement('a');
-  a.href = `https://www.erepublik.com/en/military/battlefield/${battle.id}`;
-  a.textContent = `${battle.region.name} (${formatNumber(stat.damage)}, ${minutesSince(battle.start)} min ago)`;
+  a.href = `https://www.erepublik.com/en/military/battlefield/${stat.battle.id}`;
+  a.textContent = `${stat.battle.region.name} (${formatNumber(stat.damage)}, ${minutesSince(stat.battle.start)} min ago)`;
   a.setAttribute('target', '_blank');
   div.appendChild(a);
   div.className = 'medal-item';
@@ -213,21 +218,23 @@ function applyStyles() {
 }
 
 .medal-container {
-    height: fit-content;
+  height: fit-content;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .medal-item {
   height: fit-content;
   margin: 4px 0;
   padding: 5px;
-  font-size: 10px;
+  font-size: 11px;
   text-align: center;
 }
 
 .refresh-medals-btn {
-    height: 22px;
-    width: 100%;
-    font-size: 14px;
+  height: 22px;
+  width: 100%;
+  font-size: 14px;
 }
 `;
 
