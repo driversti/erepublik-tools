@@ -236,57 +236,61 @@ function readStorageOrDefault() {
 }
 
 const run = async () => {
-  if (!authorized) {
-    await createSession();
-  }
+  try {
+    if (!authorized) {
+      await createSession();
+    }
 
-  const profileJson = await fetchProfileJson();
-  const storage = readStorageOrDefault();
+    const profileJson = await fetchProfileJson();
+    const storage = readStorageOrDefault();
 
-  if (!profileJson) {
-    console.log("Profile json is empty. Skipping...");
-    return;
-  }
-  if (!profileJson.citizen) {
-    console.log("Citizen is empty. Skipping...");
-    console.log(profileJson);
-    // if (profileJson === { error: 'not_authorized' }) {
-    //   await createSession();
-    // } else {
-    //   console.error("Unknown error. Termination...")
-    //   return;
-    // }
-    clearInterval(runIntervalId);
-    clearInterval(tokenIntervalId);
-    return;
-  }
+    if (!profileJson) {
+      console.log("Profile json is empty. Skipping...");
+      return;
+    }
+    if (!profileJson.citizen) {
+      console.log("Citizen is empty. Skipping...");
+      console.log(profileJson);
+      // if (profileJson === { error: 'not_authorized' }) {
+      //   await createSession();
+      // } else {
+      //   console.error("Unknown error. Termination...")
+      //   return;
+      // }
+      clearInterval(runIntervalId);
+      clearInterval(tokenIntervalId);
+      return;
+    }
 
-  let currentOnlineStatus = profileJson.citizen.onlineStatus ? 'Online' : 'Offline';
-  if (storage.lastOnlineStatus === currentOnlineStatus) {
-    console.log(`Online status is the same (${currentOnlineStatus}). Skipping...`);
-  } else {
-    console.log(`Online status changed (${currentOnlineStatus}). Sending message...`);
-    const message = `*${profileJson.citizen.name}* is now *${currentOnlineStatus}*`;
-    // await bot.sendMessage(TELEGRAM_CHANNEL, message, {parse_mode: 'Markdown'});
-    storage.lastOnlineStatus = currentOnlineStatus;
-    storage.lastCheck = new Date().toISOString();
-    await fs.promises.writeFile(filename, JSON.stringify(storage));
-  }
+    let currentOnlineStatus = profileJson.citizen.onlineStatus ? 'Online' : 'Offline';
+    if (storage.lastOnlineStatus === currentOnlineStatus) {
+      console.log(`Online status is the same (${currentOnlineStatus}). Skipping...`);
+    } else {
+      console.log(`Online status changed (${currentOnlineStatus}). Sending message...`);
+      const message = `*${profileJson.citizen.name}* is now *${currentOnlineStatus}*`;
+      // await bot.sendMessage(TELEGRAM_CHANNEL, message, {parse_mode: 'Markdown'});
+      storage.lastOnlineStatus = currentOnlineStatus;
+      storage.lastCheck = new Date().toISOString();
+      await fs.promises.writeFile(filename, JSON.stringify(storage));
+    }
 
-  let currentLocation = profileJson.location.residenceRegion.name;
-  let currentCountry = profileJson.location.residenceCountry.name;
-  if (storage.lastLocation === currentLocation) {
-    console.log(`Location is the same (${currentLocation}, ${currentCountry}). Skipping...`);
-  } else {
-    console.log(`Location changed to ${currentLocation}. Sending message...`);
-    const message = `<a href="https://www.erepublik.com/en/citizen/profile/${PLAYER_ID}">${profileJson.citizen.name}</a> is now in <b>${currentLocation}, ${currentCountry}</b>`;
-    await bot.sendMessage(TELEGRAM_CHANNEL, message, {
-      parse_mode: 'HTML',
-      disable_web_page_preview: true
-    });
-    storage.lastLocation = currentLocation;
-    storage.lastCheck = new Date().toISOString();
-    fs.writeFileSync(filename, JSON.stringify(storage));
+    let currentLocation = profileJson.location.residenceRegion.name;
+    let currentCountry = profileJson.location.residenceCountry.name;
+    if (storage.lastLocation === currentLocation) {
+      console.log(`Location is the same (${currentLocation}, ${currentCountry}). Skipping...`);
+    } else {
+      console.log(`Location changed to ${currentLocation}. Sending message...`);
+      const message = `<a href="https://www.erepublik.com/en/citizen/profile/${PLAYER_ID}">${profileJson.citizen.name}</a> is now in <b>${currentLocation}, ${currentCountry}</b>`;
+      await bot.sendMessage(TELEGRAM_CHANNEL, message, {
+        parse_mode: 'HTML',
+        disable_web_page_preview: true
+      });
+      storage.lastLocation = currentLocation;
+      storage.lastCheck = new Date().toISOString();
+      fs.writeFileSync(filename, JSON.stringify(storage));
+    }
+  } catch (e) {
+    console.error("Error while running the script", e);
   }
 }
 
