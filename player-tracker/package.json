@@ -1,0 +1,37 @@
+{
+  "name": "player-tracker",
+  "version": "1.0.1",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "bundle": "webpack",
+    "chmod": "chmod +x ./create_buildx.sh",
+    "createBuilder": "npm run chmod && ./create_buildx.sh",
+    "generateDockerfile": "node generateDockerfile.js",
+    "buildVersion": "docker buildx build --platform linux/amd64,linux/arm64 -t driversti/erep-player-tracker:${npm_package_version} --push .",
+    "buildLatest": "docker buildx build --platform linux/amd64,linux/arm64 -t driversti/erep-plater-tracker:latest --push .",
+    "build": "npm run generateDockerfile && npm run createBuilder && npm run buildVersion && npm run buildLatest",
+    "package": "npm run bundle && npm run build"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.4.0",
+    "axios-cookiejar-support": "^4.0.7",
+    "cheerio": "^1.0.0-rc.12",
+    "fs": "^0.0.1-security",
+    "node-telegram-bot-api": "^0.61.0",
+    "path": "^0.12.7",
+    "qs": "^6.11.2",
+    "tough-cookie": "^4.1.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.22.11",
+    "@babel/preset-env": "^7.22.10",
+    "babel-loader": "^9.1.3",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4",
+    "webpack-node-externals": "^3.0.0"
+  }
+}
