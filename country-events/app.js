@@ -32,6 +32,9 @@ function readFeed(feed) {
 
 function handleLaws(reversedItems, country) {
   // console.log(`Handling ${JSON.stringify(country.name)} (${country.id}) laws`);
+  if (!country.lawChannel) {
+    return;
+  }
   const items = reversedItems
     .filter(item => lawsOnly(item, country.id))
     .filter(item => forCountryOnly(item, country.id))
@@ -57,6 +60,9 @@ function handleLaws(reversedItems, country) {
 
 function handleBattles(reversedItems, country) {
   // console.log(`Handling ${JSON.stringify(country.name)} (${country.id}) battles`);
+  if (!country.battlesChannel) {
+    return;
+  }
   const items = reversedItems
     .filter(item => battlesOnly(item, country.id))
     .filter(item => forCountryOnly(item, country.id))
