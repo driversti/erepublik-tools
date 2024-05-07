@@ -30,12 +30,12 @@ function readFeed(feed) {
   // console.info("Execution time (hr): %ds %dms", end[0], end[1] / 1000000);
 }
 
-function handleLaws(reversedItems, country) {
+function handleLaws(laws, country) {
   // console.log(`Handling ${JSON.stringify(country.name)} (${country.id}) laws`);
   if (!country.lawChannel) {
     return;
   }
-  const items = reversedItems
+  const items = laws
     .filter(item => lawsOnly(item, country.id))
     .filter(item => forCountryOnly(item, country.id))
     .map(item => prepareItemsForSending(item, country.id))
@@ -58,12 +58,12 @@ function handleLaws(reversedItems, country) {
   send(message, country.lawChannel);
 }
 
-function handleBattles(reversedItems, country) {
+function handleBattles(battles, country) {
   // console.log(`Handling ${JSON.stringify(country.name)} (${country.id}) battles`);
   if (!country.battlesChannel) {
     return;
   }
-  const items = reversedItems
+  const items = battles
     .filter(item => battlesOnly(item, country.id))
     .filter(item => forCountryOnly(item, country.id))
     .map(item => prepareItemsForSending(item, country.id))
@@ -119,12 +119,17 @@ function hasAttacked(item, countryId) {
 
 function lawsOnly(item, countryId) {
   return lawLink(item, countryId)
+    || isConcessionLaw(item)
     || (isCountryNameWithTagInLink(item) || isHostDoubledInLink(item, countryId))
 }
 
 function lawLink(item, countryId) {
   const LAW_REGEX = new RegExp(`https://www.erepublik.com/(?:${config.getLang(countryId)}|en)/main/law/`);
   return LAW_REGEX.test(item.link);
+}
+
+function isConcessionLaw(item) {
+  return item.content.startsWith("A Resource Concession law to //www.erepublik.com");
 }
 
 function isCountryNameWithTagInLink(item) {
@@ -181,3 +186,4 @@ setInterval(() => checkForUpdates(RSS_FEED_ALL), CHECK_INTERVAL);
 // checkForUpdates(COUNTRIES.getRssFeed(COUNTRY_ID, 4));
 // checkForUpdates(COUNTRIES.getRssFeed(COUNTRY_ID, 5));
 
+module.exports = {handleLaws};
