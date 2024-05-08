@@ -62,6 +62,7 @@
     // work
     work();
     // work overtime
+    setTimeout(() => workOvertime(), 1000); // need to make sure we have worked first
     // work as manager (in loop)
     // train
     // buy goods
@@ -79,7 +80,6 @@
       return;
     }
 
-    console.log('working...');
     const body = `_token=${_token}&action_type=work`;
     post('/economy/work', body)
       .then(response => response.json())
@@ -91,6 +91,30 @@
           return;
         }
         const updatedProgress = {...progress, work: {...progress.work, day: _day, worked: true}};
+        saveProgress(updatedProgress);
+      })
+      .catch(error => notifyDeveloper(error));
+  }
+
+  function workOvertime() {
+    const progress = readProgress();
+    if (!progress) return;
+    if (progress.workOvertime?.day === erepublik.settings.eDay && progress.workOvertime?.worked) {
+      console.log('Already worked overtime');
+      return;
+    }
+
+    const body = `_token=${_token}&action_type=workOvertime`;
+    post('/economy/workOvertime', body)
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        if (data.error) console.log('Already worked overtime');
+        if (!data.status) {
+          console.log('Work overtime failed');
+          return;
+        }
+        const updatedProgress = {...progress, workOvertime: {...progress.workOvertime, day: _day, worked: true}};
         saveProgress(updatedProgress);
       })
       .catch(error => notifyDeveloper(error));
