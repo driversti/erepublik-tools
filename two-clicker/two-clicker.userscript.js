@@ -40,6 +40,12 @@
     console.log('2Clicker error: ' + message);
   }
 
+  function objToQueryString(obj) {
+    return Object
+      .keys(obj)
+      .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(obj[key])).join('&');
+  }
+
   // add a button to start the script
   addButton();
 
@@ -61,17 +67,18 @@
     const progress = readProgress();
     console.log(progress);
     // work
-    work();
+    // work();
     // work overtime
-    setTimeout(() => workOvertime(), 1000); // need to make sure we have worked first
+    // setTimeout(() => workOvertime(), 1000); // need to make sure we have worked first
     // work as manager (in loop)
     // train
-    train();
+    // train();
     // buy goods
+    // buyFoodQ1();
     // buy gold
-    purchaseGold();
+    // purchaseGold();
     // claim VIP points
-    claimVIPPoints();
+    // claimVIPPoints();
   }
 
   function work() {
@@ -148,6 +155,63 @@
         saveProgress(updatedProgress);
       })
       .catch(error => notifyDeveloper(error));
+  }
+
+  async function buyFoodQ1() {
+    const progress = readProgress();
+    if (!progress) return;
+    if (progress.buyFoodQ1?.day === erepublik.settings.eDay && progress.buyFoodQ1?.bought) {
+      console.log('Already bought food');
+      return;
+    }
+
+    const resp = await findGoodsOffers();
+    console.log(resp);
+    if (!resp.can_buy || !resp.offers.length) {
+      alert('Cannot buy food. Are there Food Q1 offers in the marketplace?');
+      return;
+    }
+
+    const offer = resp.offers[0];
+    if (offer.priceWithTaxes > 1) {
+      alert('The maximum price for Food Q1 must be less than 1 ' + erepublik.citizen.currency);
+      return;
+    }
+
+    const body = objToQueryString({
+      offerId: offer.id,
+      amount: 1,
+      orderBy: 'price_asc',
+      currentPage: 1,
+      buyAction: 1,
+      _token: _token
+    })
+    post('/economy/marketplaceActions', body)
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        if (data.error) {
+          alert('Error buying food: ' + data.message);
+          return;
+        }
+
+        const updatedProgress = {...progress, buyFoodQ1: {...progress.buyFoodQ1, day: _day, bought: true}};
+        saveProgress(updatedProgress);
+      })
+      .catch(error => notifyDeveloper(error));
+  }
+
+  async function findGoodsOffers(industryId = 1, quality = 1) {
+    const response = await post('/economy/marketplaceAjax', objToQueryString({
+      countryId: erepublik.citizen.countryLocationId,
+      industryId: industryId,
+      quality: quality,
+      orderBy: 'price_asc',
+      currentPage: 1,
+      ajaxMarket: 1,
+      _token: _token
+    }));
+    return response.json();
   }
 
   function purchaseGold() {
