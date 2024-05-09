@@ -13,9 +13,10 @@
   'use strict';
 
   const E_URL = 'https://www.erepublik.com/en';
-
   const _token = SERVER_DATA.csrfToken;
   const _day = erepublik.settings.eDay;
+
+  const trainingGrounds = [85434, 363943, 1979243, 364274];
 
   const headers = new Headers({
     'Accept': 'application/json, text/plain, */*',
@@ -65,6 +66,7 @@
     setTimeout(() => workOvertime(), 1000); // need to make sure we have worked first
     // work as manager (in loop)
     // train
+    train();
     // buy goods
     // buy gold
     purchaseGold();
@@ -88,7 +90,6 @@
         if (data.error) console.log('Already worked');
         if (!data.status) {
           console.log('Work failed');
-          return;
         }
         const updatedProgress = {...progress, work: {...progress.work, day: _day, worked: true}};
         saveProgress(updatedProgress);
@@ -112,9 +113,38 @@
         if (data.error) console.log('Already worked overtime');
         if (!data.status) {
           console.log('Work overtime failed');
-          return;
         }
         const updatedProgress = {...progress, workOvertime: {...progress.workOvertime, day: _day, worked: true}};
+        saveProgress(updatedProgress);
+      })
+      .catch(error => notifyDeveloper(error));
+  }
+
+  async function train() {
+    const progress = readProgress();
+    if (!progress) return;
+    if (progress.train?.day === erepublik.settings.eDay && progress.train?.trained) {
+      console.log('Already trained');
+      return;
+    }
+
+    const json = await get('/main/training-grounds-json')
+      .then(response => response.json());
+
+    const body = json.grounds.map((ground, index) =>
+      `grounds[${index}][id]=${ground.id}&grounds[${index}][train]=${ground.trained ? 0 : 1}`
+    ).join('&') + '&_token=' + _token;
+
+    post('/economy/train', body)
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        if (data.error) console.log('Already trained');
+        if (!data.status) {
+          console.log('Train failed');
+          return;
+        }
+        const updatedProgress = {...progress, train: {...progress.train, day: _day, trained: true}};
         saveProgress(updatedProgress);
       })
       .catch(error => notifyDeveloper(error));
@@ -200,6 +230,15 @@
       mode: 'cors',
       credentials: 'include',
       body: body
+    })
+  }
+
+  function get(path) {
+    return fetch(E_URL + path, {
+      method: 'GET',
+      headers: headers,
+      mode: 'cors',
+      credentials: 'include',
     })
   }
 

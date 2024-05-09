@@ -179,3 +179,4 @@ player-tracker/Dockerfile
 player-tracker/storage.json
 statistics/eRepublik.xlsx
 statistics/src/eRepublik.xlsx
+/.idea/git_toolbox_prj.xml
