@@ -6,7 +6,7 @@
 // @author       driversti
 // @match        https://www.erepublik.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=erepublik.com
-// @grant        none
+// @grant        GM_addStyle
 // ==/UserScript==
 
 (function () {
@@ -15,6 +15,8 @@
   const E_URL = 'https://www.erepublik.com/en';
   const _token = SERVER_DATA.csrfToken;
   const _day = erepublik.settings.eDay;
+
+  let settingsToggle = false;
 
   const headers = new Headers({
     'Accept': 'application/json, text/plain, */*',
@@ -351,4 +353,55 @@
       return `${encodeURIComponent(key)}=${value}`;
     }).join('&');
   }
+
+  const addSettingsBlock = () => {
+    const settingsBlock = document.createElement('div');
+    settingsBlock.id = 'twoClickerSettings';
+    settingsBlock.className = 'twoClickerSettings';
+    addHeader(settingsBlock);
+
+    const parent = document.querySelector('.sidebar_container');
+    parent.appendChild(settingsBlock);
+  }
+
+  const addHeader = (settingsBlock) => {
+    const header = document.createElement('p');
+    header.innerHTML = '2Clicker Settings';
+    header.className = 'header';
+
+    const toggle = document.createElement('p')
+    toggle.innerHTML = settingsToggle ? 'Show' : 'Hide';
+    toggle.className = 'header toggle';
+    toggle.addEventListener('click', () => {
+      settingsToggle = !settingsToggle;
+      toggle.innerHTML = settingsToggle ? 'Show' : 'Hide';
+    });
+
+    settingsBlock.appendChild(header);
+    settingsBlock.appendChild(toggle);
+  }
+
+  // addSettingsBlock();
+
+  GM_addStyle(`
+  .twoClickerSettings {
+    width: 100%;
+    height: 100px;
+    background-color: gold;
+    padding: 3px;
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    left: -3px;
+    justify-content: space-between;
+  }
+  
+  .header {
+    display: inline-block;
+   }
+   
+  .toggle {
+    cursor: pointer;
+   }
+  `);
 })();
