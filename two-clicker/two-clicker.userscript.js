@@ -16,8 +16,6 @@
   const _token = SERVER_DATA.csrfToken;
   const _day = erepublik.settings.eDay;
 
-  const trainingGrounds = [85434, 363943, 1979243, 364274];
-
   const headers = new Headers({
     'Accept': 'application/json, text/plain, */*',
     'Content-Type': 'application/x-www-form-urlencoded',
@@ -80,7 +78,7 @@
       console.log('Already worked');
       return;
     }
-    if(!isEnergyEnough(10)) {
+    if (!isEnergyEnough(10)) {
       alert('Not enough energy to work');
       return;
     }
@@ -107,7 +105,7 @@
       console.log('Already worked overtime');
       return;
     }
-    if(!isEnergyEnough(20)) {
+    if (!isEnergyEnough(10)) {
       alert('Not enough energy to work overtime');
       return;
     }
@@ -133,7 +131,7 @@
     const companyIds = Array.from(companies).map(company => company.id.replace('company_', ''));
     console.log(companyIds);
     if (!companyIds.length) return;
-    if (!isEnergyEnough(companyIds * 10)) {
+    if (!isEnergyEnough(companyIds.length * 10)) {
       alert('Not enough energy to work as manager');
       return;
     }
