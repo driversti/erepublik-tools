@@ -40,10 +40,8 @@
     console.log('2Clicker error: ' + message);
   }
 
-  function objToQueryString(obj) {
-    return Object
-      .keys(obj)
-      .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(obj[key])).join('&');
+  function isEnergyEnough(energy) {
+    return erepublik.citizen.energy >= energy;
   }
 
   // add a button to start the script
@@ -66,19 +64,13 @@
     // read the progress from local storage
     const progress = readProgress();
     console.log(progress);
-    // work
-    // work();
-    // work overtime
-    // setTimeout(() => workOvertime(), 1000); // need to make sure we have worked first
-    // work as manager (in loop)
-    // train
-    // train();
-    // buy goods
-    // buyFoodQ1();
-    // buy gold
-    // purchaseGold();
-    // claim VIP points
-    // claimVIPPoints();
+    work();
+    setTimeout(() => workOvertime(), 1000); // need to make sure we have worked first
+    workAsManager();
+    train();
+    buyFoodQ1();
+    purchaseGold();
+    claimVIPPoints();
   }
 
   function work() {
@@ -86,6 +78,10 @@
     if (!progress) return;
     if (progress.work?.day === erepublik.settings.eDay && progress.work?.worked) {
       console.log('Already worked');
+      return;
+    }
+    if(!isEnergyEnough(10)) {
+      alert('Not enough energy to work');
       return;
     }
 
@@ -111,6 +107,10 @@
       console.log('Already worked overtime');
       return;
     }
+    if(!isEnergyEnough(20)) {
+      alert('Not enough energy to work overtime');
+      return;
+    }
 
     const body = `_token=${_token}&action_type=workOvertime`;
     post('/economy/workOvertime', body)
@@ -127,6 +127,34 @@
       .catch(error => notifyDeveloper(error));
   }
 
+  async function workAsManager() {
+    const doc = await fetchHTML('/economy/myCompanies');
+    const companies = doc.querySelectorAll('.listing.companies:not(.disabled, .notInRegion, .notAssigned, .cannotWorkAsManager)');
+    const companyIds = Array.from(companies).map(company => company.id.replace('company_', ''));
+    console.log(companyIds);
+    if (!companyIds.length) return;
+    if (!isEnergyEnough(companyIds * 10)) {
+      alert('Not enough energy to work as manager');
+      return;
+    }
+
+    const body = objToQueryString({
+      own_work: companyIds,
+      employee_works: {},
+      cntOwnWork: companyIds.length,
+      cntSelected: companyIds.length,
+      action_type: 'production',
+      _token: _token
+    });
+
+    post('/economy/work', body)
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+      })
+      .catch(error => notifyDeveloper(error));
+  }
+
   async function train() {
     const progress = readProgress();
     if (!progress) return;
@@ -137,6 +165,10 @@
 
     const json = await get('/main/training-grounds-json')
       .then(response => response.json());
+    if (!isEnergyEnough(json.grounds.length * 10)) {
+      alert('Not enough energy to train');
+      return;
+    }
 
     const body = json.grounds.map((ground, index) =>
       `grounds[${index}][id]=${ground.id}&grounds[${index}][train]=${ground.trained ? 0 : 1}`
@@ -240,7 +272,7 @@
   }
 
   async function findGoldOfferId() {
-    const exchangeMarket = await fetchExchangeMarketHTML();
+    const exchangeMarket = await fetchHTML('/economy/exchange-market');
     const table = exchangeMarket.querySelector('.exchange_offers');
     if (!table) return 0;
 
@@ -257,8 +289,8 @@
     return offerId;
   }
 
-  async function fetchExchangeMarketHTML() {
-    return fetch(E_URL + '/economy/exchange-market')
+  async function fetchHTML(path) {
+    return fetch(E_URL + path)
       .then(response => response.text())
       .then(html => {
         return new DOMParser().parseFromString(html, 'text/html')
@@ -306,31 +338,19 @@
     })
   }
 
-  function toImplement() {
-    console.log('0.3');
-
-    $j(document).ready(function () {
-      console.log(erepublik.settings.eDay);
-      const progress = JSON.parse(localStorage.getItem('2clicker')) || {};
-      console.log(progress);
-      console.log(progress.eDay);
-      if (!progress.wam) {
-        console.log(progress.wam);
-        //$j('#openPageButton').click(function() {
-//            window.open('https://www.erepublik.com/en/economy/myCompanies', '_self');
-        setTimeout(printIds, 1000);
+  function objToQueryString(obj) {
+    return Object.keys(obj).map(key => {
+      let value = obj[key];
+      if (typeof value === 'object') {
+        if (Array.isArray(value)) {
+          // Array to string conversion: [1,2,3] -> "%5B1%2C2%2C3%5D"
+          value = encodeURIComponent(JSON.stringify(value));
+        } else {
+          // Object to string conversion: {} -> "%7B%7D"
+          value = encodeURIComponent(JSON.stringify(value));
+        }
       }
-      progress.wam = true;
-      localStorage.setItem('2clicker', JSON.stringify(progress));
-      //});
-    });
-
-    function printIds() {
-      const checkObj = $j('.listing.companies').not('.disabled, .notInRegion, .notAssigned, .cannotWorkAsManager');
-      const companyIds = $j.map(checkObj, function (el) {
-        return $j(el).attr('id').replace('company_', '')
-      });
-      //console.log(companyIds);
-    }
+      return `${encodeURIComponent(key)}=${value}`;
+    }).join('&');
   }
 })();
