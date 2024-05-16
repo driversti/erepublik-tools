@@ -129,7 +129,7 @@
 
   async function workAsManager() {
     const doc = await fetchHTML('/economy/myCompanies');
-    const companies = doc.querySelectorAll('.listing.companies:not(.disabled, .notInRegion, .notAssigned, .cannotWorkAsManager)');
+    const companies = doc.querySelectorAll('.listing.companies.active:not(.disabled, .notInRegion, .notAssigned, .cannotWorkAsManager)');
     const companyIds = Array.from(companies).map(company => company.id.replace('company_', ''));
     console.log(companyIds);
     if (!companyIds.length) return;
